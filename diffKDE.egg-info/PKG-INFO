@@ -1,0 +1,93 @@
+Metadata-Version: 2.4
+Name: diffKDE
+Version: 1
+Summary: Diffusion-based kernel density estimator for the approximation of 1D probability density functions.
+Author: Maria-Theresia Pelz, Thomas Slawig
+Author-email: mtv@informatik.uni-kiel.de , ts@informatik.uni-kiel.de
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: license-file
+Dynamic: requires-python
+Dynamic: summary
+
+# Diffusion-based kernel density estimator
+
+This package includes a function to calculate the diffusion kernel density estimator from 1-dimensional data with a new approximation of the optimal bandwidth. Furthermore, it provides pre-implemented visual outputs of an incorporated pilot function, the time evolution and a customizable exploration of the different smoothing grades of the estimator at different bandwidths. For the diffusion kernel density estimator the bandwidth parameter equals the positive square root of the final iteration time.
+
+## Installation
+
+For the installation navigate to your chosen target directory, include the diffKDE directory and run from the parent directory
+```
+pip install -e diffKDE
+```
+Afterwards, the package is available everywhere on your machine in Python.
+
+## Import and execution
+
+To use the diffusion kernel density estimator in Python include the import statement
+```
+from diffKDE import diffKDE
+```
+in the header of your Python file. Afterwards, you can apply it on any 1-dimensional data set (e.g. Numpy arrays or lists) by
+```
+diffKDE.KDE(data)
+```
+
+### Parameters
+
+The parameters for the diffusion kernel density estimator are in this sequence
+
+- `data` 1-dimension data vector; required
+- `xmin` float value for lower data boundary; min(data) by default
+- `xmax` float value for upper data bounday; max(data) by default
+- `n` integer value for number of spatial discretization intervals; 1004 by default
+- `timesteps` integer value for number of temporal discretization intervals; 20 by default
+- `T` float value for final iteration time; optimal bandwith approximation `T*` by default
+
+### Return values
+
+The return value of the diffusion kernel density estimator is a tupel including in this order
+
+- `u_k` the diffusion kernel density estimator evaluated at the spatial discretization points
+- `Omega` the equidistant spatial discretization 
+
+## Pre-implemented visual output
+
+To access the pre-implemented visual outputs of the diffusion kernel density estimator in Python include the import statement
+```
+from diffKDE import diffKDE
+```
+in the header of your Python file. Afterwards, you can apply the plot functions on any 1-dimensional data set (e.g. Numpy arrays or lists) by
+```
+diffKDE.pilot_plot(data)
+```
+for the pilot plot or
+```
+diffKDE.evol_plot(data)
+```
+for the evolution plot or
+```
+diffKDE.custom_plot(data)
+```
+for the customizable plot.
+
+### Pilot plot
+
+The pre-implemented pilot plot displays the pilot used as a parameter function in the diffusion equation together with the diffusion kernel density estimator and the input data.
+
+### Evolution plot
+
+The pre-implemented evolution plot displays the solution of the diffusion equation in every calculated time step up to the final diffusion kernel density estimator together with the input data.
+
+### Customizable plot
+
+The pre-implemented customizable plot displays the diffusion kernel density estimator at the final iteration time `T`. A slider bar can be used to change the time. The plot interactively adapts to display the diffusion kernel density estimator at the new time.

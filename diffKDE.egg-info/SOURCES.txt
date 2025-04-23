@@ -1,0 +1,10 @@
+LICENSE
+README.md
+pyproject.toml
+setup.py
+diffKDE/__init__.py
+diffKDE/diffKDE.py
+diffKDE.egg-info/PKG-INFO
+diffKDE.egg-info/SOURCES.txt
+diffKDE.egg-info/dependency_links.txt
+diffKDE.egg-info/top_level.txt
