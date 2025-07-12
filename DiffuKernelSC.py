@@ -720,58 +720,22 @@ peak_counts_sampB_curr = len(bootstrap_sampB_curr_modes)
 peak_counts_sampC_curr = len(bootstrap_sampC_curr_modes)
 print(peak_counts_sampB_curr, peak_counts_sampC_curr)
 #Save the output to a log .txt file
-with open("Volt_Bootstrap_logs.txt","w") as f:
-    f.write("#Counts number of peaks from 20,000 simulations\n")
-    f.write(f"Sample A Voltage Peaks: {peak_counts_sampA}\n")
-    f.write(f"Sample B Voltage Peaks: {peak_counts_sampB}\n")
-    f.write(f"Sample C Voltage Peaks: {peak_counts_sampC}\n")
+with open("Current_Bootstrap_logs.txt","w") as f:
+    f.write('#Number of samples that failed diffKDE\n')
+    f.write(f'Sample_B:{failed_diffB_curr}|{(failed_diffB_curr/20000)*100:.4f}%;'
+            f'Sample_C:{failed_diffC_curr}|{(failed_diffC_curr/20000)*100:.4f}%\n')
+    f.write("#Counts number of peaks from 20,000-failed simulations\n")
+    f.write(f"Sample B Current Peaks: {peak_counts_sampB_curr}\n")
+    f.write(f"Sample C Current Peaks: {peak_counts_sampC_curr}\n")
     
 #----------------------------------------------------------------------------------------------------
 
-#Voltage Mode Confidence Interval
-mode_ci_A = np.percentile(bootstrap_sampA_volt_modes, [2.5, 97.5])
-mode_ci_B = np.percentile(bootstrap_sampB_volt_modes, [2.5, 97.5])
-mode_ci_C = np.percentile(bootstrap_sampC_volt_modes, [2.5, 97.5])
-print(mode_ci_A, mode_ci_B, mode_ci_C)
+#Current Mode Confidence Interval
+mode_ci_B_curr = np.percentile(bootstrap_sampB_curr_modes, [2.5, 97.5])
+mode_ci_C_curr = np.percentile(bootstrap_sampC_curr_modes, [2.5, 97.5])
+print(mode_ci_B_curr,mode_ci_C_curr)
 #---------------------------------------------------------------------------------------------------------
 
-##Sample A Voltage total Sum
-total_sampA_volt = np.sum((bootstrap_sampA_volt_modes >= mode_ci_A[0]) & 
-                          (bootstrap_sampA_volt_modes <= mode_ci_A[1]))
-##Divide the Bootstrap Modes into classes
-#Sample A Voltage
-ci_sampA_volt_low = np.sum((bootstrap_sampA_volt_modes >= mode_ci_A[0])
-                & (bootstrap_sampA_volt_modes <= 0.07483))
-ci_sampA_volt_medium = np.sum((bootstrap_sampA_volt_modes > 0.07483)
-                & (bootstrap_sampA_volt_modes <= 0.08707))
-ci_sampA_volt_high = np.sum((bootstrap_sampA_volt_modes > 0.08707)
-                & (bootstrap_sampA_volt_modes <= mode_ci_A[1]))
-#Percentage number of peaks in low
-per_sampA_l = (ci_sampA_volt_low/total_sampA_volt)*100
-per_sampA_m = (ci_sampA_volt_medium/total_sampA_volt)*100
-per_sampA_h = (ci_sampA_volt_high/total_sampA_volt)*100
-perA_all = (per_sampA_l,per_sampA_m, per_sampA_h)
-#Robust typical value (median)
-median_sampA_l = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes >= mode_ci_A[0])
-                & (bootstrap_sampA_volt_modes <= 0.07483)])
-median_sampA_m = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes > 0.07483)
-                & (bootstrap_sampA_volt_modes <= 0.08707)])
-median_sampA_h = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes > 0.08707)
-                & (bootstrap_sampA_volt_modes <= mode_ci_A[1])])
-medianA_all = (median_sampA_l,median_sampA_m,median_sampA_h)
-
-#Append into the bootstrap log .txt file
-with open("Volt_Bootstrap_logs.txt","a") as f:
-    f.write("\n--------------------\n")
-    f.write("#Sample A Voltage Bootstrap Details\n")
-    f.write(f"CI: Lower Bound is {mode_ci_A[0]:.4f}V, Upper Bound is {mode_ci_A[1]:.4f}V")
-    f.write("\n")
-    f.write("Classification of the Voltage Bootstrap Modes\n")
-    f.write(f"Total Voltage Peaks within CI: {total_sampA_volt:.0f}\n")
-    f.write(f"Low Class ({mode_ci_A[0]:.4f}V - 0.07483V): {ci_sampA_volt_low:.0f}; Percentage: {per_sampA_l:.4f}%; Median: {median_sampA_l:.4f}V\n")
-    f.write(f"Medium Class (> (0.07483)V - 0.08707V): {ci_sampA_volt_medium:.0f}; Percentage: {per_sampA_m:.4f}%; Median: {median_sampA_m:.4f}V\n")
-    f.write(f"High Class (0.08707V - {mode_ci_A[1]:.4f}V): {ci_sampA_volt_high:.0f}; Percentage: {per_sampA_h:.4f}%; Median: {median_sampA_h:.4f}V\n")  
-#------------------------------------------------------------------------------------------
 ##Sample B Voltage total Sum
 total_sampB_volt = np.sum((bootstrap_sampB_volt_modes >= mode_ci_B[0]) & 
                           (bootstrap_sampB_volt_modes <= mode_ci_B[1]))
