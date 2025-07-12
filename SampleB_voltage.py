@@ -2,9 +2,10 @@
 """
 Created on Mon Apr 21 18:16:20 2025
 
-@author: user
+@author: Dr. REBEL-ious
 """
 import os
+from scipy.signal import find_peaks
 import numpy as np
 import pandas as pd
 import scipy
@@ -95,14 +96,27 @@ plt.savefig('histogram_plotsB.png', dpi = 300, bbox_inches = 'tight')
 plt.close('histogram_plotsB.png')
 
 #using the automati plots
-#diffKDE.evol_plot(sampleB_volt)
-#diffKDE.pilot_plot(sampleB_volt) #The pilot plot at the interest T
-#diffKDE.custom_plot(sampleB_volt)
+diffKDE.evol_plot(sampleB_volt)
+diffKDE.pilot_plot(sampleB_volt) #The pilot plot at the interest T
+diffKDE.custom_plot(sampleB_volt)
 
 #Show plot
 plt.tight_layout()
 plt.show()
 
+
+#create a canva name sampleB_mode
+#plt.figure('sampleA_mode', figsize = (10,6))
+#plot the voltages and the kdes
+plt.plot(omega, u_k, label = 'diffKDE Curve', linewidth = 2)
+plt.legend()
+plt.xlabel('Voltage (V)')
+plt.ylabel('Density')
+plt.grid()
+plt.ylim(bottom=0)
+plt.tight_layout()
+plt.savefig('ModesB.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
 
 ##Sample B Current analysis
 #Carry out the Diffusion Kernel Density of which the Optimum will be arrived at
@@ -134,14 +148,67 @@ plt.legend()
 
 #Saving the histo
 plt.tight_layout()
-#plt.savefig('histogram_plotsBcurrent.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('histogram_plotsBcurrent.png', dpi = 300, bbox_inches = 'tight')
 plt.close('histogram_plotsBcurrent.png')
 
 #using the automati plots
-#diffKDE.evol_plot(sampleB_curr)
-#diffKDE.pilot_plot(sampleB_curr, T = 0.03369) #The pilot plot at the interest T
-#diffKDE.custom_plot(sampleB_curr)
+diffKDE.evol_plot(sampleB_curr)
+diffKDE.pilot_plot(sampleB_curr, T = 0.03369) #The pilot plot at the interest T
+diffKDE.custom_plot(sampleB_curr)
 
 #Show plot
 plt.tight_layout()
+plt.show()
+
+#Identify peaks for Chi-square comparisonSample B Current
+peaks, _ = find_peaks(u_km)
+peak_volt_value = omegam[peaks]
+#print(f'Model peaks are at: {volt_value}')
+#Finding the valleys
+valleys, _ = find_peaks(-u_km)
+valley_volt_value = omegam[valleys]
+
+#create a canva name sampleA_mode
+#plt.figure('sampleA_mode', figsize = (10,6))
+#plot the voltages and the kdes
+plt.plot(omegam, u_km, label = 'diffKDE Curve', linewidth = 2)
+
+
+#Getting the modes edges and also plotting
+#For each mode in the modes trying to get out the rhs-lhs edges
+for i, modes in enumerate(peak_volt_value):
+    left_edges = valley_volt_value[valley_volt_value<modes]
+    right_edges = valley_volt_value[valley_volt_value>modes]
+    left_edge = left_edges[-1] if len(left_edges) > 0 else omegam[0]
+    right_edge = right_edges[0] if len(right_edges) > 0 else omegam[-1]
+    print(f'\n The mode is: {modes:.2f}, with bounds {left_edge:.2f} and {right_edge:.2f}')
+    
+    #Plotting the left and right bounds
+    plt.axvline(left_edge, color = 'blue', linestyle = '--' )
+    plt.axvline(right_edge, color = 'blue', linestyle = '--')
+    
+    #Fill the peaks
+    plt.fill_between(omegam, 0, u_km, where=(omegam>=left_edge) & (omegam<=right_edge), alpha = 0.2)
+
+    #Label the mode on top of the peak
+    plt.text(modes, u_km[peaks[i]]+0.02, f'Mode {i+1}: {modes:.2f} V', ha='center',weight='bold',fontsize=8, color='green')
+    #Label the left and right valley edges (under the line)
+    plt.text(left_edge,0.05,f'{left_edge:.2f}',ha='right',va='bottom', rotation=90,weight='bold',fontsize=8,color='red')
+    plt.text(right_edge,0.05,f'{right_edge:.2f}',ha='left',va='bottom',rotation=90,weight='bold',fontsize=8,color='red')
+    if len(left_edges) == 0:
+        plt.plot(left_edge,u_km[omegam==left_edge],'o',color='red')
+    if len(right_edges) == 0:
+        plt.plot(right_edge,u_km[omegam==right_edge],'o',color='red')
+#mark the vallyes with o using the plt.plot func
+plt.plot(valley_volt_value, u_km[valleys], 'o', color = 'red', label = 'Valleys')
+#mark the peaks with P using the plt.plot func
+plt.plot(peak_volt_value, u_km[peaks], 'x', color = 'green', label = 'Modes')
+
+plt.legend()
+plt.xlabel('Current (A)')
+plt.ylabel('Density')
+plt.grid()
+plt.ylim(bottom=0)
+plt.tight_layout()
+plt.savefig('ModesBC.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

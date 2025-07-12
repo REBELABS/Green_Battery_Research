@@ -2,7 +2,7 @@
 """
 Created on Sun Apr 20 23:09:42 2025
 
-@author: user
+@author: Dr. REBEL-ious
 """
 from PIL import Image
 import matplotlib.pyplot as plt
@@ -170,4 +170,77 @@ axs[1,1].axis('off')
 #Show plots
 plt.tight_layout()
 plt.savefig("SampleCCKDE", dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+
+#------------------------------------------------------------------------------
+#Modes for all sample's voltage
+#Load individual images
+img1 = Image.open('ModesA.png')
+img2 = Image.open('ModesB.png')
+img3 = Image.open('ModesC.png')
+img4 = Image.open('compositeKDEs_volt.png')
+
+#Create sub-plots
+fig_B, axsb = plt.subplots(2,2, figsize =(12,8), constrained_layout = True)
+
+#Create over-reaching tiltle for all plots
+fig_B.suptitle(r"\textbf{Diffusion KDE Modes Analysis for Sample A-C Voltage}", fontsize = 14, weight = 'bold')
+
+# Display images on subplots
+axsb[0,0].imshow(img1)
+axsb[0,0].axis('off')
+axsb[0,0].set_title("(a) Identified voltage modes and bounding limit for sample A", fontsize = 12)
+
+axsb[0,1].imshow(img2)
+axsb[0,1].axis('off')
+axsb[0,1].set_title(r"(b) Identified voltage modes and bounding limit for sample B", fontsize = 12)
+
+axsb[1,0].imshow(img3)
+axsb[1,0].axis('off')
+axsb[1,0].set_title("(c) Identified voltage modes and bounding limit for sample C", fontsize = 12)
+
+axsb[1,1].imshow(img4)
+axsb[1,1].axis('off')
+axsb[1,1].set_title("(d) Voltage Modes comparison for sample A-C", fontsize = 12)
+
+#Show plots
+plt.tight_layout()
+plt.savefig("volt_modes_comparison.png", dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+#------------------------------------------------------------------------------
+#Modes for all sample's voltage
+#Load individual images
+img1 = Image.open('ModesA.png')
+img2 = Image.open('ModesB.png')
+img3 = Image.open('ModesC.png')
+img4 = Image.open('compositeKDEs_volt.png')
+
+#Create sub-plots
+fig_B, axsb = plt.subplots(2,2, figsize =(12,8), constrained_layout = True)
+
+#Create over-reaching tiltle for all plots
+fig_B.suptitle(r"\textbf{Diffusion KDE Modes Analysis for Sample A-C Voltage}", fontsize = 14, weight = 'bold')
+
+# Display images on subplots
+axsb[0,0].imshow(img1)
+axsb[0,0].axis('off')
+axsb[0,0].set_title("(a) Identified voltage modes and bounding limit for sample A", fontsize = 12)
+
+axsb[0,1].imshow(img2)
+axsb[0,1].axis('off')
+axsb[0,1].set_title(r"(b) Identified voltage modes and bounding limit for sample B", fontsize = 12)
+
+axsb[1,0].imshow(img3)
+axsb[1,0].axis('off')
+axsb[1,0].set_title("(c) Identified voltage modes and bounding limit for sample C", fontsize = 12)
+
+axsb[1,1].imshow(img4)
+axsb[1,1].axis('off')
+axsb[1,1].set_title("(d) Voltage Modes comparison for sample A-C", fontsize = 12)
+
+#Show plots
+plt.tight_layout()
+plt.savefig("volt_modes_comparison.png", dpi = 300, bbox_inches = 'tight')
 plt.show()
