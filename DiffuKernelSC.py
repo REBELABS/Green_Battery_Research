@@ -321,7 +321,8 @@ for _ in range(n_interations):
         bootstrap_sampC_volt_modes.append(resampleC_volt_omega[resampleC_tallest_peak_index])
 #The total time for boostrapmode
 end_time_volt_bs = time.time()-start
-print(f'Total time is {time.time()-start}')
+print(f'Total time for Voltage BS is: {end_time_volt_bs}')
+print(len(bootstrap_sampB_volt_modes))
 #-----------------------------------------------------------------------------------------------
 
 #Saving the Bootstrap Voltage results and their modes
@@ -339,9 +340,9 @@ np.savez("Voltage_Bootstrap_and_Modes.npz",Sample_A_volt=bootstrap_sampA_volt,
          Sample_B_volt=bootstrap_sampB_volt,Sample_B=bootstrap_sampB_volt_modes,
          Sample_C_volt=bootstrap_sampC_volt,Sample_C=bootstrap_sampC_volt_modes)
 #Padded with NaN to be of the same enght to avoid error
-boot_mode_volt = pd.DataFrame({"Sample_A_volt":pd.Series(bootstrap_sampA_volt),"Sample_A_volt_mode":pd.Series(bootstrap_sampA_volt_modes),
-                               "Sample_B_volt":pd.Series(bootstrap_sampB_volt),"Sample_B_volt_mode":pd.Series(bootstrap_sampB_volt_modes),
-                               "Sample_C_volt":pd.Series(bootstrap_sampC_volt),"Sample_C_volt_mode":pd.Series(bootstrap_sampC_volt_modes)})
+boot_mode_volt = pd.DataFrame({"Sample_A_volt_mode":pd.Series(bootstrap_sampA_volt_modes),
+                               "Sample_B_volt_mode":pd.Series(bootstrap_sampB_volt_modes),
+                               "Sample_C_volt_mode":pd.Series(bootstrap_sampC_volt_modes)})
 boot_mode_volt.to_csv("Voltage_Bootstrap_and_Modes.csv", index=False)
 #-------------------------------------------------------------------------------------------------
 
@@ -352,30 +353,34 @@ peak_counts_sampB = len(bootstrap_sampB_volt_modes)
 print(peak_counts_sampA, peak_counts_sampB, peak_counts_sampC)
 with open("Volt_Bootstrap_logs.txt","w") as f:
 #Save the output to a log .txt file
+    f.write(f"20,000 simulations for voltage mode took: {end_time_volt_bs}s\n")
     f.write("#Counts number of peaks from 20,000 simulations\n")
-    f.write(f"Sample A Voltage Peaks: {peak_counts_sampA}\n")
-    f.write(f"Sample B Voltage Peaks: {peak_counts_sampB}\n")
-    f.write(f"Sample C Voltage Peaks: {peak_counts_sampC}\n")
+    f.write(f"Sample A Voltage Peaks: {peak_counts_sampA}|Percentage: {(peak_counts_sampA/20000)*100:.4f}%\n")
+    f.write(f"Sample B Voltage Peaks: {peak_counts_sampB}|Percentage: {(peak_counts_sampB/20000)*100:.4f}%\n")
+    f.write(f"Sample C Voltage Peaks: {peak_counts_sampC}|Percentage: {(peak_counts_sampC/20000)*100:.4f}%\n")
 #----------------------------------------------------------------------------------------------------
-
+#Voltage Confidence Interval
+volt_ci_A = np.percentile(bootstrap_sampA_volt, [2.5, 97.5])
+volt_ci_B = np.percentile(bootstrap_sampB_volt, [2.5, 97.5])
+volt_ci_C = np.percentile(bootstrap_sampC_volt, [2.5, 97.5])
+print(volt_ci_A, volt_ci_B, volt_ci_C)
 #Voltage Mode Confidence Interval
-mode_ci_A = np.percentile(bootstrap_sampA_volt_modes, [2.5, 97.5])
-mode_ci_B = np.percentile(bootstrap_sampB_volt_modes, [2.5, 97.5])
-mode_ci_C = np.percentile(bootstrap_sampC_volt_modes, [2.5, 97.5])
-print(mode_ci_A, mode_ci_B, mode_ci_C)
+volt_mode_ci_A = np.percentile(bootstrap_sampA_volt_modes, [2.5, 97.5])
+volt_mode_ci_B = np.percentile(bootstrap_sampB_volt_modes, [2.5, 97.5])
+volt_mode_ci_C = np.percentile(bootstrap_sampC_volt_modes, [2.5, 97.5])
+print(volt_mode_ci_A, volt_mode_ci_B, volt_mode_ci_C)
 #---------------------------------------------------------------------------------------------------------
 ##Dividing the bootstrap modes in classes
 #Sample A Voltage total Sum
-total_sampA_volt = np.sum((bootstrap_sampA_volt_modes >= mode_ci_A[0]) & 
-                          (bootstrap_sampA_volt_modes <= mode_ci_A[1]))
-
+total_sampA_volt = np.sum((bootstrap_sampA_volt_modes >= volt_mode_ci_A[0]) & 
+                          (bootstrap_sampA_volt_modes <= volt_mode_ci_A[1]))
 #Sample A Voltage
-ci_sampA_volt_low = np.sum((bootstrap_sampA_volt_modes >= mode_ci_A[0])
-                & (bootstrap_sampA_volt_modes <= 0.07483))
-ci_sampA_volt_medium = np.sum((bootstrap_sampA_volt_modes > 0.07483)
-                & (bootstrap_sampA_volt_modes <= 0.08707))
-ci_sampA_volt_high = np.sum((bootstrap_sampA_volt_modes > 0.08707)
-                & (bootstrap_sampA_volt_modes <= mode_ci_A[1]))
+ci_sampA_volt_low = np.sum((bootstrap_sampA_volt_modes >= volt_mode_ci_A[0])
+                & (bootstrap_sampA_volt_modes <= 0.07364))
+ci_sampA_volt_medium = np.sum((bootstrap_sampA_volt_modes > 0.07364)
+                & (bootstrap_sampA_volt_modes <= 0.08746))
+ci_sampA_volt_high = np.sum((bootstrap_sampA_volt_modes > 0.08746)
+                & (bootstrap_sampA_volt_modes <= volt_mode_ci_A[1]))
 
 #Percentage number of peaks in low
 per_sampA_l = (ci_sampA_volt_low/total_sampA_volt)*100
@@ -384,75 +389,75 @@ per_sampA_h = (ci_sampA_volt_high/total_sampA_volt)*100
 perA_all = (per_sampA_l,per_sampA_m, per_sampA_h)
 
 #Robust typical value (median)
-median_sampA_l = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes >= mode_ci_A[0])
-                & (bootstrap_sampA_volt_modes <= 0.07483)])
-median_sampA_m = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes > 0.07483)
-                & (bootstrap_sampA_volt_modes <= 0.08707)])
-median_sampA_h = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes > 0.08707)
-                & (bootstrap_sampA_volt_modes <= mode_ci_A[1])])
+median_sampA_l = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes >= volt_mode_ci_A[0])
+                & (bootstrap_sampA_volt_modes <= 0.07364)])
+median_sampA_m = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes > 0.07364)
+                & (bootstrap_sampA_volt_modes <= 0.08746)])
+median_sampA_h = np.median(bootstrap_sampA_volt_modes[(bootstrap_sampA_volt_modes > 0.08746)
+                & (bootstrap_sampA_volt_modes <= volt_mode_ci_A[1])])
 medianA_all = (median_sampA_l,median_sampA_m,median_sampA_h)
 
 #Append into the bootstrap log .txt file
 with open("Volt_Bootstrap_logs.txt","a") as f:
     f.write("\n--------------------\n")
-    f.write("#Sample A Voltage Bootstrap Details\n")
-    f.write(f"CI: Lower Bound is {mode_ci_A[0]:.4f}V, Upper Bound is {mode_ci_A[1]:.4f}V")
+    f.write("#Sample A Voltage Mode Bootstrap Details\n")
+    f.write(f"CI: Lower Bound is {volt_mode_ci_A[0]:.4f}V, Upper Bound is {volt_mode_ci_A[1]:.4f}V")
     f.write("\n")
     f.write("Classification of the Voltage Bootstrap Modes\n")
     f.write(f"Total Voltage Peaks within CI: {total_sampA_volt:.0f}\n")
-    f.write(f"Low Class ({mode_ci_A[0]:.4f}V - 0.07483V): {ci_sampA_volt_low:.0f}; Percentage: {per_sampA_l:.4f}%; Median: {median_sampA_l:.4f}V\n")
-    f.write(f"Medium Class (> (0.07483)V - 0.08707V): {ci_sampA_volt_medium:.0f}; Percentage: {per_sampA_m:.4f}%; Median: {median_sampA_m:.4f}V\n")
-    f.write(f"High Class (0.08707V - {mode_ci_A[1]:.4f}V): {ci_sampA_volt_high:.0f}; Percentage: {per_sampA_h:.4f}%; Median: {median_sampA_h:.4f}V\n")  
+    f.write(f"Low Class ({volt_mode_ci_A[0]:.4f}V - 0.07364V): {ci_sampA_volt_low:.0f}; Percentage: {per_sampA_l:.4f}%; Median: {median_sampA_l:.4f}V\n")
+    f.write(f"Medium Class (> (0.07364)V - 0.08746V): {ci_sampA_volt_medium:.0f}; Percentage: {per_sampA_m:.4f}%; Median: {median_sampA_m:.4f}V\n")
+    f.write(f"High Class (0.08746V - {volt_mode_ci_A[1]:.4f}V): {ci_sampA_volt_high:.0f}; Percentage: {per_sampA_h:.4f}%; Median: {median_sampA_h:.4f}V\n")  
 #------------------------------------------------------------------------------------------
-##Sample B Voltage total Sum
-total_sampB_volt = np.sum((bootstrap_sampB_volt_modes >= mode_ci_B[0]) & 
-                          (bootstrap_sampB_volt_modes <= mode_ci_B[1]))
+##Sample B Voltage mode total Sum
+total_sampB_volt = np.sum((bootstrap_sampB_volt_modes >= volt_mode_ci_B[0]) & 
+                          (bootstrap_sampB_volt_modes <= volt_mode_ci_B[1]))
 
 #Sample B Voltage
-ci_sampB_volt_low = np.sum((bootstrap_sampB_volt_modes >= mode_ci_B[0])
-                & (bootstrap_sampB_volt_modes <= 0.10256))
-ci_sampB_volt_medium = np.sum((bootstrap_sampB_volt_modes > 0.10256)
-                & (bootstrap_sampB_volt_modes <= 0.12316))
-ci_sampB_volt_high = np.sum((bootstrap_sampB_volt_modes > 0.12316)
-                & (bootstrap_sampB_volt_modes <= mode_ci_B[1]))
+ci_sampB_volt_low = np.sum((bootstrap_sampB_volt_modes >= volt_mode_ci_B[0])
+                & (bootstrap_sampB_volt_modes <= 0.10869))
+ci_sampB_volt_medium = np.sum((bootstrap_sampB_volt_modes > 0.10869)
+                & (bootstrap_sampB_volt_modes <= 0.12421))
+ci_sampB_volt_high = np.sum((bootstrap_sampB_volt_modes > 0.12421)
+                & (bootstrap_sampB_volt_modes <= volt_mode_ci_B[1]))
 #Percentage number of peaks in low
 per_sampB_l = (ci_sampB_volt_low/total_sampB_volt)*100
 per_sampB_m = (ci_sampB_volt_medium/total_sampB_volt)*100
 per_sampB_h = (ci_sampB_volt_high/total_sampB_volt)*100
 perB_all = (per_sampB_l,per_sampB_m, per_sampB_h)
 #Robust typical value (median)
-median_sampB_l = np.median(bootstrap_sampB_volt_modes[(bootstrap_sampB_volt_modes >= mode_ci_B[0])
-                & (bootstrap_sampB_volt_modes <= 0.10256)])
-median_sampB_m = np.median(bootstrap_sampB_volt_modes[(bootstrap_sampB_volt_modes > 0.10256)
-                & (bootstrap_sampB_volt_modes <= 0.12316)])
-median_sampB_h = np.median(bootstrap_sampB_volt_modes[(bootstrap_sampB_volt_modes > 0.12316)
-                & (bootstrap_sampB_volt_modes <= mode_ci_B[1])])
+median_sampB_l = np.median(bootstrap_sampB_volt_modes[(bootstrap_sampB_volt_modes >= volt_mode_ci_B[0])
+                & (bootstrap_sampB_volt_modes <= 0.10869)])
+median_sampB_m = np.median(bootstrap_sampB_volt_modes[(bootstrap_sampB_volt_modes > 0.10869)
+                & (bootstrap_sampB_volt_modes <= 0.12421)])
+median_sampB_h = np.median(bootstrap_sampB_volt_modes[(bootstrap_sampB_volt_modes > 0.12421)
+                & (bootstrap_sampB_volt_modes <= volt_mode_ci_B[1])])
 medianB_all = (median_sampB_l,median_sampB_m,median_sampB_h)
 
 #Append into the bootstrap log .txt file
 with open("Volt_Bootstrap_logs.txt","a") as f:
     f.write("\n--------------------\n")
-    f.write("#Sample B Voltage Bootstrap Details\n")
-    f.write(f"CI: Lower Bound is {mode_ci_B[0]:.4f}V, Upper Bound is {mode_ci_B[1]:.4f}V")
+    f.write("#Sample B Voltage Mode Bootstrap Details\n")
+    f.write(f"CI: Lower Bound is {volt_mode_ci_B[0]:.4f}V, Upper Bound is {volt_mode_ci_B[1]:.4f}V")
     f.write("\n")
     f.write("Classification of the Voltage Bootstrap Modes\n")
     f.write(f"Total Voltage Peaks within CI: {total_sampB_volt:.0f}\n")
-    f.write(f"Low Class ({mode_ci_B[0]:.4f}V - 0.10256V): {ci_sampB_volt_low:.0f}; Percentage: {per_sampB_l:.4f}%; Median: {median_sampB_l:.4f}V\n")
-    f.write(f"Medium Class (> (0.10256)V - 0.12316V): {ci_sampB_volt_medium:.0f}; Percentage: {per_sampB_m:.4f}%; Median: {median_sampB_m:.4f}V\n")
-    f.write(f"High Class (0.12316V - {mode_ci_B[1]:.4f}V): {ci_sampB_volt_high:.0f}; Percentage: {per_sampB_h:.4f}%; Median: {median_sampB_h:.4f}V\n")  
+    f.write(f"Low Class ({volt_mode_ci_B[0]:.4f}V - 0.10869V): {ci_sampB_volt_low:.0f}; Percentage: {per_sampB_l:.4f}%; Median: {median_sampB_l:.4f}V\n")
+    f.write(f"Medium Class (> (0.10869)V - 0.12421V): {ci_sampB_volt_medium:.0f}; Percentage: {per_sampB_m:.4f}%; Median: {median_sampB_m:.4f}V\n")
+    f.write(f"High Class (0.12421V - {volt_mode_ci_B[1]:.4f}V): {ci_sampB_volt_high:.0f}; Percentage: {per_sampB_h:.4f}%; Median: {median_sampB_h:.4f}V\n")  
 #------------------------------------------------------------------------------------------
 
-##Sample C Voltage total Sum
-total_sampC_volt = np.sum((bootstrap_sampC_volt_modes >= mode_ci_C[0]) & 
-                          (bootstrap_sampC_volt_modes <= mode_ci_C[1]))
+##Sample C Voltage mode total Sum
+total_sampC_volt = np.sum((bootstrap_sampC_volt_modes >= volt_mode_ci_C[0]) & 
+                          (bootstrap_sampC_volt_modes <= volt_mode_ci_C[1]))
 ##Divide the Bootstrap Modes into classes
 #Sample C Voltage
-ci_sampC_volt_low = np.sum((bootstrap_sampC_volt_modes >= mode_ci_C[0])
-                & (bootstrap_sampC_volt_modes <= 0.12543))
-ci_sampC_volt_medium = np.sum((bootstrap_sampC_volt_modes > 0.12543)
-                & (bootstrap_sampC_volt_modes <= 0.15294))
-ci_sampC_volt_high = np.sum((bootstrap_sampC_volt_modes > 0.15294)
-                & (bootstrap_sampC_volt_modes <= mode_ci_C[1]))
+ci_sampC_volt_low = np.sum((bootstrap_sampC_volt_modes >= volt_mode_ci_C[0])
+                & (bootstrap_sampC_volt_modes <= 0.12912))
+ci_sampC_volt_medium = np.sum((bootstrap_sampC_volt_modes > 0.12912)
+                & (bootstrap_sampC_volt_modes <= 0.15088))
+ci_sampC_volt_high = np.sum((bootstrap_sampC_volt_modes > 0.15088)
+                & (bootstrap_sampC_volt_modes <= volt_mode_ci_C[1]))
 #Percentage number of peaks in low
 per_sampC_l = (ci_sampC_volt_low/total_sampC_volt)*100
 per_sampC_m = (ci_sampC_volt_medium/total_sampC_volt)*100
@@ -460,37 +465,37 @@ per_sampC_h = (ci_sampC_volt_high/total_sampC_volt)*100
 perC_all = (per_sampC_l,per_sampC_m, per_sampC_h)
 
 #Robust typical value (median)
-median_sampC_l = np.median(bootstrap_sampC_volt_modes[(bootstrap_sampC_volt_modes >= mode_ci_C[0])
-                & (bootstrap_sampC_volt_modes <= 0.12543)])
-median_sampC_m = np.median(bootstrap_sampC_volt_modes[(bootstrap_sampC_volt_modes > 0.12543)
-                & (bootstrap_sampC_volt_modes <= 0.15294)])
-median_sampC_h = np.median(bootstrap_sampC_volt_modes[(bootstrap_sampC_volt_modes > 0.15294)
-                & (bootstrap_sampC_volt_modes <= mode_ci_C[1])])
+median_sampC_l = np.median(bootstrap_sampC_volt_modes[(bootstrap_sampC_volt_modes >= volt_mode_ci_C[0])
+                & (bootstrap_sampC_volt_modes <= 0.12912)])
+median_sampC_m = np.median(bootstrap_sampC_volt_modes[(bootstrap_sampC_volt_modes > 0.12912)
+                & (bootstrap_sampC_volt_modes <= 0.15088)])
+median_sampC_h = np.median(bootstrap_sampC_volt_modes[(bootstrap_sampC_volt_modes > 0.15088)
+                & (bootstrap_sampC_volt_modes <= volt_mode_ci_C[1])])
 medianC_all = (median_sampC_l,median_sampC_m,median_sampC_h)
 #Append into the bootstrap log .txt file
 with open("Volt_Bootstrap_logs.txt","a") as f:
     f.write("\n--------------------\n")
-    f.write("#Sample C Voltage Bootstrap Details\n")
-    f.write(f"CI: Lower Bound is {mode_ci_C[0]:.4f}V, Upper Bound is {mode_ci_C[1]:.4f}V")
+    f.write("#Sample C Voltage Mode Bootstrap Details\n")
+    f.write(f"CI: Lower Bound is {volt_mode_ci_C[0]:.4f}V, Upper Bound is {volt_mode_ci_C[1]:.4f}V")
     f.write("\n")
     f.write("Classification of the Voltage Bootstrap Modes\n")
     f.write(f"Total Voltage Peaks within CI: {total_sampC_volt:.0f}\n")
-    f.write(f"Low Class ({mode_ci_C[0]:.4f}V - 0.12543V): {ci_sampC_volt_low:.0f}; Percentage: {per_sampC_l:.4f}%; Median: {median_sampC_l:.4f}V\n")
-    f.write(f"Medium Class (> (0.12543)V - 0.15294V): {ci_sampC_volt_medium:.0f}; Percentage: {per_sampC_m:.4f}%; Median: {median_sampC_m:.4f}V\n")
-    f.write(f"High Class (0.15294V - {mode_ci_C[1]:.4f}V): {ci_sampC_volt_high:.0f}; Percentage: {per_sampC_h:.4f}%; Median: {median_sampC_h:.4f}V\n")  
+    f.write(f"Low Class ({volt_mode_ci_C[0]:.4f}V - 0.12912V): {ci_sampC_volt_low:.0f}; Percentage: {per_sampC_l:.4f}%; Median: {median_sampC_l:.4f}V\n")
+    f.write(f"Medium Class (> (0.12912)V - 0.15088V): {ci_sampC_volt_medium:.0f}; Percentage: {per_sampC_m:.4f}%; Median: {median_sampC_m:.4f}V\n")
+    f.write(f"High Class (0.15088V - {volt_mode_ci_C[1]:.4f}V): {ci_sampC_volt_high:.0f}; Percentage: {per_sampC_h:.4f}%; Median: {median_sampC_h:.4f}V\n")  
 #------------------------------------------------------------------------------------------
-##Bootstrap voltage comparison infor for BarChart
+##Bootstrap voltage mode comparison infor for BarChart
 #List of infor for each sample
-sampA_counts= [per_sampA_l,per_sampA_m,per_sampA_h]
-sampB_counts= [per_sampB_l,per_sampB_m,per_sampB_h]
-sampC_counts= [per_sampC_l,per_sampC_m,per_sampC_h]
+volt_mode_sampA_counts= [per_sampA_l,per_sampA_m,per_sampA_h]
+volt_mode_sampB_counts= [per_sampB_l,per_sampB_m,per_sampB_h]
+volt_mode_sampC_counts= [per_sampC_l,per_sampC_m,per_sampC_h]
 
 #Labels and bar positions
 labels = ['Low','Medium','High']
-width_diff = 0.25
+width_diff = 0.27
 x_positions= np.arange(len(labels))
 
-#-------------------------------------------------------------------------------------------------
+#-----------------------------------------------------------------------------------------------------------
 #Mode CI Bootstrap Plots
 mode_fig, mode_axs = plt.subplots(2,2, figsize=(12,8), constrained_layout = True)
 
@@ -499,8 +504,8 @@ mode_fig.suptitle(r"\textbf{Bootstrap Mode Confidence Interval for Samples A-C V
 
 #For sample A Voltage
 mode_axs[0,0].hist(bootstrap_sampA_volt_modes, bins='auto',alpha = 0.5)
-mode_axs[0,0].axvline(mode_ci_A[0],color='red',linestyle='--',label=f'Lower CI: {mode_ci_A[0]:.3f}')
-mode_axs[0,0].axvline(mode_ci_A[1],color='green',linestyle='--',label=f'Upper CI: {mode_ci_A[1]:.3f}')
+mode_axs[0,0].axvline(volt_mode_ci_A[0],color='red',linestyle='--',label=f'Lower CI: {volt_mode_ci_A[0]:.3f}')
+mode_axs[0,0].axvline(volt_mode_ci_A[1],color='green',linestyle='--',label=f'Upper CI: {volt_mode_ci_A[1]:.3f}')
 mode_axs[0,0].set_title('(a) Sample A Voltage')
 mode_axs[0,0].grid(alpha=0.4)
 mode_axs[0,0].legend()
@@ -509,8 +514,8 @@ mode_axs[0,0].set_ylabel('Frequency')
 
 #For sample B Voltage
 mode_axs[0,1].hist(bootstrap_sampB_volt_modes, bins='auto',alpha = 0.5)
-mode_axs[0,1].axvline(mode_ci_B[0],color='red',linestyle='--',label=f'Lower CI: {mode_ci_B[0]:.3f}')
-mode_axs[0,1].axvline(mode_ci_B[1],color='green',linestyle='--',label=f'Upper CI: {mode_ci_B[1]:.3f}')
+mode_axs[0,1].axvline(volt_mode_ci_B[0],color='red',linestyle='--',label=f'Lower CI: {volt_mode_ci_B[0]:.3f}')
+mode_axs[0,1].axvline(volt_mode_ci_B[1],color='green',linestyle='--',label=f'Upper CI: {volt_mode_ci_B[1]:.3f}')
 mode_axs[0,1].set_title('(b) Sample B Voltage')
 mode_axs[0,1].grid(alpha=0.4)
 mode_axs[0,1].legend()
@@ -519,8 +524,8 @@ mode_axs[0,1].set_ylabel('Frequency')
 
 #For sample C Voltage
 mode_axs[1,0].hist(bootstrap_sampC_volt_modes, bins='auto',alpha = 0.5)
-mode_axs[1,0].axvline(mode_ci_C[0],color='red',linestyle='--',label=f'Lower CI: {mode_ci_C[0]:.3f}')
-mode_axs[1,0].axvline(mode_ci_C[1],color='green',linestyle='--',label=f'Upper CI: {mode_ci_C[1]:.3f}')
+mode_axs[1,0].axvline(volt_mode_ci_C[0],color='red',linestyle='--',label=f'Lower CI: {volt_mode_ci_C[0]:.3f}')
+mode_axs[1,0].axvline(volt_mode_ci_C[1],color='green',linestyle='--',label=f'Upper CI: {volt_mode_ci_C[1]:.3f}')
 mode_axs[1,0].set_title('(c) Sample C Voltage')
 mode_axs[1,0].grid(alpha=0.4)
 mode_axs[1,0].legend()
@@ -528,9 +533,9 @@ mode_axs[1,0].set_xlabel(r"Voltage $(V)$")
 mode_axs[1,0].set_ylabel('Frequency')
 
 #Bar chart for comparison of classifications
-mode_axs[1,1].bar(x_positions-width_diff,sampA_counts,width_diff,label='Sample A', color='orange')
-mode_axs[1,1].bar(x_positions,sampB_counts,width_diff,label='Sample B',color='red')
-mode_axs[1,1].bar(x_positions+width_diff,sampC_counts,width_diff,label='Sample C',color='green')
+mode_axs[1,1].bar(x_positions-width_diff,volt_mode_sampA_counts,width_diff,label='Sample A', color='orange')
+mode_axs[1,1].bar(x_positions,volt_mode_sampB_counts,width_diff,label='Sample B',color='red')
+mode_axs[1,1].bar(x_positions+width_diff,volt_mode_sampC_counts,width_diff,label='Sample C',color='green')
 #Barchart properties
 mode_axs[1,1].set_ylim(0,80)
 mode_axs[1,1].set_xticks(x_positions)
@@ -546,32 +551,30 @@ for i, (perc,median_value) in enumerate(zip(perB_all,medianB_all)):
     mode_axs[1,1].text(x_positions[i],perc+0.3,fr"${median_value:.4f}\,\mathrm{{V^*}}$",ha='center',va='bottom',fontsize=7)
 for i, (perc,median_value) in enumerate(zip(perC_all,medianC_all)):
     mode_axs[1,1].text(x_positions[i]+width_diff,perc+0.3,fr"${median_value:.4f}\,\mathrm{{V^*}}$",ha='center',va='bottom',fontsize=7)
-plt.savefig("BootstrapMode.png", dpi = 300, bbox_inches = 'tight')
+plt.savefig("Bootstrap_Volt_Mode.png", dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #-------------------------------------------------------------------------------------------------------
 
 ##Bootstrap Voltage Median 
-n_interations = 20000
 start = time.time()
-#List of bootstrap median voltage
-bootstrap_sampA_volt_median = []
-bootstrap_sampB_volt_median = []
-bootstrap_sampC_volt_median = []
 
 #A DEF statement to run for all samples, returns the median for each
-def bootstrap_median(data,n_iterations):
-    return [np.median(np.random.choice(data,size=len(data),replace=True)) for _ in range(n_iterations)]
+def bootstrap_median(data):
+    return [np.median(databits) for databits in data]
 
 #Bootstrap for Sample A median
-bootstrap_sampA_volt_median = bootstrap_median(sampleA_volt,n_interations)
+bootstrap_sampA_volt_median = bootstrap_median(bootstrap_sampA_volt)
 #Bootstrap for Sample B median
-bootstrap_sampB_volt_median = bootstrap_median(sampleB_volt,n_interations)
+bootstrap_sampB_volt_median = bootstrap_median(bootstrap_sampB_volt)
 #Bootstrap for Sample C median
-bootstrap_sampC_volt_median = bootstrap_median(sampleC_volt,n_interations)
+bootstrap_sampC_volt_median = bootstrap_median(bootstrap_sampC_volt)
      
 #The total time for boostrapmedian
+end_time_volt_bsmedian = time.time()-start
 print(f'Total time is {time.time()-start}')
+#Save the time
+
 #-----------------------------------------------------------------------------------------------
 
 #Saving the Median Bootstrap Voltage results
@@ -592,21 +595,21 @@ boot_median_volt.to_csv("Voltage Bootstrap Median.csv", index=False)
 #-------------------------------------------------------------------------------------------------
 
 #Count number of medians returned out of 20,000 simulations
-median_counts_sampA = len(bootstrap_sampA_volt_median)
-median_counts_sampB = len(bootstrap_sampB_volt_median)
-median_counts_sampC = len(bootstrap_sampC_volt_median)
-print(median_counts_sampA, median_counts_sampB, median_counts_sampC)
+volt_median_counts_sampA = len(bootstrap_sampA_volt_median)
+volt_median_counts_sampB = len(bootstrap_sampB_volt_median)
+volt_median_counts_sampC = len(bootstrap_sampC_volt_median)
+print(volt_median_counts_sampA, volt_median_counts_sampB, volt_median_counts_sampC)
 
 #----------------------------------------------------------------------------------------------------
 
 #Voltage Median Confidence Interval
-median_ci_A = np.percentile(bootstrap_sampA_volt_median, [2.5, 97.5])
-median_ci_B = np.percentile(bootstrap_sampB_volt_median, [2.5, 97.5])
-median_ci_C = np.percentile(bootstrap_sampC_volt_median, [2.5, 97.5])
-print(median_ci_A, median_ci_B, median_ci_C)
+volt_median_ci_A = np.percentile(bootstrap_sampA_volt_median, [2.5, 97.5])
+volt_median_ci_B = np.percentile(bootstrap_sampB_volt_median, [2.5, 97.5])
+volt_median_ci_C = np.percentile(bootstrap_sampC_volt_median, [2.5, 97.5])
+print(volt_median_ci_A, volt_median_ci_B, volt_median_ci_C)
 #---------------------------------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------------------------
-##Median CI Bootstrap Plots
+##Median Voltage CI Bootstrap Plots
 median_fig, median_axs = plt.subplots(2,2, figsize=(12,8), constrained_layout = True)
 
 #Create over-reaching tiltle for all plots
@@ -616,8 +619,8 @@ median_fig.suptitle(r"\textbf{Bootstrap Median Confidence Interval for Samples A
 median_axs[1,1].axis("off")
 #For sample A Voltage
 median_axs[0,0].hist(bootstrap_sampA_volt_median, bins='auto',alpha = 0.5)
-median_axs[0,0].axvline(median_ci_A[0],color='red',linestyle='--',label=f'Lower CI: {median_ci_A[0]:.3f}')
-median_axs[0,0].axvline(median_ci_A[1],color='green',linestyle='--',label=f'Upper CI: {median_ci_A[1]:.3f}')
+median_axs[0,0].axvline(volt_median_ci_A[0],color='red',linestyle='--',label=f'Lower CI: {volt_median_ci_A[0]:.3f}')
+median_axs[0,0].axvline(volt_median_ci_A[1],color='green',linestyle='--',label=f'Upper CI: {volt_median_ci_A[1]:.3f}')
 median_axs[0,0].set_title('(a) Sample A Voltage')
 median_axs[0,0].grid(alpha=0.4)
 median_axs[0,0].legend()
@@ -626,31 +629,25 @@ median_axs[0,0].set_ylabel('Frequency')
 
 #For sample B Voltage
 median_axs[0,1].hist(bootstrap_sampB_volt_median, bins='auto',alpha = 0.5)
-median_axs[0,1].axvline(median_ci_B[0],color='red',linestyle='--',label=f'Lower CI: {median_ci_B[0]:.3f}')
-median_axs[0,1].axvline(median_ci_B[1],color='green',linestyle='--',label=f'Upper CI: {median_ci_B[1]:.3f}')
+median_axs[0,1].axvline(volt_median_ci_B[0],color='red',linestyle='--',label=f'Lower CI: {volt_median_ci_B[0]:.3f}')
+median_axs[0,1].axvline(volt_median_ci_B[1],color='green',linestyle='--',label=f'Upper CI: {volt_median_ci_B[1]:.3f}')
 median_axs[0,1].set_title('(b) Sample B Voltage')
 median_axs[0,1].grid(alpha=0.4)
-median_axs[0,1].legend(loc=left_edge)
+median_axs[0,1].legend()
 median_axs[0,1].set_xlabel(r"Voltage $(V)$")
 median_axs[0,1].set_ylabel('Frequency')
 
 #For sample C Voltage
 median_axs[1,0].hist(bootstrap_sampC_volt_median, bins='auto',alpha = 0.5)
-median_axs[1,0].axvline(median_ci_C[0],color='red',linestyle='--',label=f'Lower CI: {median_ci_C[0]:.3f}')
-median_axs[1,0].axvline(median_ci_C[1],color='green',linestyle='--',label=f'Upper CI: {median_ci_C[1]:.3f}')
+median_axs[1,0].axvline(volt_median_ci_C[0],color='red',linestyle='--',label=f'Lower CI: {volt_median_ci_C[0]:.3f}')
+median_axs[1,0].axvline(volt_median_ci_C[1],color='green',linestyle='--',label=f'Upper CI: {volt_median_ci_C[1]:.3f}')
 median_axs[1,0].set_title('(c) Sample C Voltage')
 median_axs[1,0].grid(alpha=0.4)
 median_axs[1,0].legend()
 median_axs[1,0].set_xlabel(r"Voltage $(V)$")
 median_axs[1,0].set_ylabel('Frequency')
-plt.savefig("BootstrapMedian.png", dpi = 300, bbox_inches = 'tight')
+plt.savefig("Bootstrap_Volt_Median.png", dpi = 300, bbox_inches = 'tight')
 plt.show()
-
-#-----------------------------------------------------------------------------------------------------------------------
-#---------------------------------------------------------------------------------------------------------
-
-
-
 
 #-------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------
@@ -967,4 +964,49 @@ curr_median_axs[0,1].set_ylabel('Frequency')
 plt.savefig("BootstrapMedian_Current.png", dpi = 300, bbox_inches = 'tight')
 plt.show()
 
+#-----------------------------------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------------------------------------
+#Power Estimate. Recall P = V X I #Only Sample B and C have I and V readings
+#number of iterations
+n_iter = 20000
 
+#Samples
+#Sample size reduced to 32
+V_b = sampleB_volt[:32]
+V_c = sampleC_volt[:32]
+C_b = sampleB_curr
+C_c = sampleC_curr
+n = len(V_b)
+
+#Paired_sampling
+for _ in range(n_interations):
+    indices = np.random.choice(n, size=n,replace=True)
+    V_b_resample = V_b[indices]
+    V_c_resample = V_c[indices]
+    C_b_resample = C_b[indices]
+    C_c_resample = C_c[indices]
+    #Power for Samples B and C
+    P_b_resample = V_b_resample * C_b_resample
+    P_c_resample = V_c_resample * C_c_resample
+    #KDE for sample B
+    P_b_resample_u_k, P_b_resample_omega = diffKDE.KDE(P_b_resample)
+    #Sample B: Get tallest peak and corresponding Power value 
+    P_b_resample_peaks,_ = find_peaks(P_b_resample_u_k)
+    if len(P_b_resample_peaks) > 0:
+        P_b_resample_tallest_peak_index = P_b_resample_peaks[np.argmax(P_b_resample_u_k[P_b_resample_peaks])]
+        P_b_resample_peaks.append(P_b_resample_omega[P_b_resample_tallest_peak_index])
+    #KDE for sample C
+    P_c_resample_u_k, P_c_resample_omega = diffKDE.KDE(P_c_resample)
+    #Sample C: Get tallest peak and corresponding Power value 
+    P_c_resample_peaks,_ = find_peaks(P_c_resample_u_k)
+    if len(P_c_resample_peaks) > 0:
+        P_c_resample_tallest_peak_index = P_c_resample_peaks[np.argmax(P_c_resample_u_k[P_c_resample_peaks])]
+        P_c_resample_peaks.append(P_c_resample_omega[P_c_resample_tallest_peak_index])
+    
+    
+    
+    
+    
+    
+    
+    
